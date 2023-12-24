@@ -43,7 +43,7 @@ def main(file):
             result = sub("%PREV%", "", result)
             result = sub("%NEXT%", "", result)
             result = sub("%TOC%", generate_toc(files), result)
-            result = sub("<div class='foot'></div>", "<div class='foot_alt'><p><a href='../" + file + ".pdf'>Download PDF</a></p><p><a href='../'>List of works</a></p></div>", result)
+            result = sub("<div class='foot'></div>", "<div class='foot_alt'><p><a href='../" + file + ".pdf' target='_blank'>Download PDF</a></p><p><a href='../'>List of works</a></p></div>", result)
             output = open(ttl + "/" + files[i][0] + ".html", "w", encoding="utf-8")
             output.writelines(result)
             output.close()
@@ -260,7 +260,7 @@ def main_index():
     result.append("<header class='page-header'><h1>Shakespeare’s works</h1></header><main class='main-content'>")
     folders = []
     for folder in listdir("."):
-        if isdir(folder):
+        if isdir(folder) and folder[0] != ".":
             folders.append(folder)
     for folder in sorted(folders):
         title = open(folder + "/index.html", "r", encoding="utf-8").read()
@@ -280,8 +280,8 @@ def main_index():
 if __name__ == "__main__":
     for file in listdir("."):
         ttl, ext = splitext(file)
-        if args.recompile or not exists(ttl + ".html"):
-            if ext == ".txt":
+        if ext == ".txt":
+            if args.recompile or not exists(ttl + "/index.html"):
                 print(ttl)
                 if not exists("./" + ttl):
                     mkdir("./" + ttl)

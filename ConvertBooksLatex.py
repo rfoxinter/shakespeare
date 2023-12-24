@@ -173,8 +173,8 @@ def main(file):
 if __name__ == "__main__":
     for file in listdir("."):
         ttl, ext = splitext(file)
-        if args.recompile or not exists(ttl + ".pdf"):
-            if ext == ".txt":
+        if ext == ".txt":
+            if args.recompile or not exists(ttl + ".pdf"):
                 print(ttl)
                 main(ttl)
                 for _ in range(3):
