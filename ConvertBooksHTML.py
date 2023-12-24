@@ -58,7 +58,7 @@ def main(file):
     def convertchar(line):
         global op
         global opquote
-        for character in findall(r"\b[A-Z]+(?:'?, [A-Z]+)*\b", line):
+        for character in findall(r"\b[A-Z']+(?:'?, [A-Z]+)*\b", line):
             if len(character) > 1:
                 if match(r"\b[I|V|X]+\b", character) is None:
                     line = sub(character, "<sc>" + capwords(character) + "</sc>", line, 1)
@@ -73,10 +73,10 @@ def main(file):
                 if line.find(">,") != -1:
                     op = True
                 line = sub(">, ", ">     <i>", line)
-            line = sub("  ", "   ", line)
             if op:
                 line = sub("\n", "</i>\n", line)
                 op = False
+        line = sub("  ", "   ", line)
         shift = 0
         for quote in finditer("\"", line):
             if opquote:
