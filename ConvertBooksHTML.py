@@ -193,7 +193,7 @@ def main(file):
             output.writelines(result)
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
-        elif content[pos] == "========\n": # Epilogue
+        elif content[pos] == "========\n" and "EPILOGUE" in content[pos - 1]: # Epilogue
             result = reset_result()
             act += 1
             scene = 0
@@ -228,7 +228,7 @@ def main(file):
             output.writelines(result)
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
-        elif content[pos] == "=======\n": # Scene
+        elif content[pos] == "=======\n" or content[pos] == "========\n": # Scene
             result = reset_result()
             scene += 1
             scenecontent = capwords(content[pos - 1])

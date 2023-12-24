@@ -20,7 +20,7 @@ def main(file):
     def convertchar(line):
         global op
         global opquote
-        for character in findall(r"\b[A-Z]+(?:'?, [A-Z]+)*\b", line):
+        for character in findall(r"\b[A-Z']+(?:'?, [A-Z]+)*\b", line):
             if len(character) > 1:
                 if match(r"\b[I|V|X]+\b", character) is None:
                     line = sub(character, "\\\\textsc{" + capwords(character) + "}", line, 1)
@@ -133,7 +133,7 @@ def main(file):
             result.append("\n")
             content[pos] = content[pos - 1]
             pos = list_scene(content, pos, result, l)
-        elif content[pos] == "========\n": # Epilogue
+        elif content[pos] == "========\n" and "EPILOGUE" in content[pos - 1]: # Epilogue
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1].replace(",", ""))
@@ -150,7 +150,7 @@ def main(file):
             result.append("\n")
             pos += 1
             pos = list_scene(content, pos, result, l)
-        elif content[pos] == "=======\n": # Scene
+        elif content[pos] == "=======\n" or content[pos] == "========\n": # Scene
             scene += 1
             result.append("{\leftskip=0em\\subsection*{" + capwords(content[pos - 1]) + "}}\\label{subsec:" + str(act) + "." + str(scene) + "}\\addcontentsline{toc}{subsection}{" + capwords(content[pos - 1]) + "}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{" + actcontent + "}}\\fancyhead[LO,RE]{\\textsc{" + capwords(content[pos - 1]) + "}}")
             result.append("\n")
