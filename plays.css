@@ -1,1 +1,88 @@
-sc{font-variant:small-caps;}p{white-space:pre-wrap;margin:0;padding-left:10px;text-indent:-10px;}footer{padding-top:0!important;}.foot{display:flex;justify-content:space-between;}.foot_alt{text-align:center;}@media screen and (min-width:0em){.foot,.foot_alt{padding:0.5rem 1rem;padding-bottom:2rem;margin:0 auto;font-size:1.1rem;}}@media screen and (min-width:42em) and (max-width:64em){.foot,.foot_alt{padding:0.5rem 1rem;padding-bottom:2rem;font-size:1.1rem;}}@media screen and (max-width:42em){.foot,.foot_alt{padding:0.5rem 1rem;padding-bottom:2rem;font-size:1rem;}}
+sc {
+    font-variant: small-caps;
+}
+
+p {
+    white-space: pre-wrap;
+    margin: 0;
+    padding-left: 10px;
+    text-indent: -10px;
+}
+
+footer {
+    padding-top: 0 !important;
+}
+
+.foot {
+    display: flex;
+    justify-content: space-between;
+}
+
+.foot_alt {
+    text-align: center;
+}
+
+@media screen and (min-width:0em) {
+    .foot, .foot_alt {
+        padding: 0.5rem 1rem;
+        padding-bottom: 2rem;
+        margin: 0 auto;
+        font-size: 1.1rem;
+    }
+}
+
+@media screen and (min-width:42em) and (max-width:64em) {
+    .foot, .foot_alt {
+        padding: 0.5rem 1rem;
+        padding-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+}
+
+@media screen and (max-width:42em) {
+    .foot, .foot_alt {
+        padding: 0.5rem 1rem;
+        padding-bottom: 2rem;
+        font-size:1rem;
+    }
+}
+
+@media print {
+    footer {
+        display: none !important;
+    }
+    header {
+        padding: none !important;
+    }
+    main {
+        margin-top: 20px !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    * {
+        color: #000000FF !important;
+        line-height: 1.15 !important;
+    }
+    .page-header {
+        background-color: #FFFFFFFF !important;
+        background-image: none !important;
+    }
+    h1, h1>i {
+        margin-top: 0px !important;
+        margin-bottom: 5px !important;
+        font-size: 20px !important;
+        color: #155799 !important;
+    }
+    h2 {
+        margin-top: 0px !important;
+        margin-bottom: 5px !important;
+        font-size: 15px !important;
+        color: #159957 !important;
+    }
+    body {
+        background-color: #FFFFFF !important;
+    }
+    p, br, center {
+        font-size: 12px !important;
+    }
+}

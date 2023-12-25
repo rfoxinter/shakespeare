@@ -21,8 +21,8 @@ def main(file):
         line = sub("--", "–", line)
         return line
     
-    def reset_result():
-        return ["<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><link rel='icon' href='https://rfoxinter.github.io/favicon.ico'/><meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#157878'><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/normalize.css'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/style.css'><style>" + style + "</style></head><body>"]
+    def reset_result(title):
+        return ["<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>" + title + "</title><link rel='icon' href='https://rfoxinter.github.io/favicon.ico'/><meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#157878'><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/normalize.css'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/style.css'><link rel='stylesheet' type='text/css' href='../plays.css'></head><body>"]
     
     def add_footer(result):
         result.append("<footer class='site-footer'>")
@@ -142,8 +142,7 @@ def main(file):
 
     title = replace_html(content[0].replace("\n", ""))
     author = content[1].replace("by", "").replace("\n", "")
-    style = open("plays.css", "r", encoding="utf-8").read()
-    result = reset_result()
+    result = reset_result(title)
     result.append("<header class='page-header'><h1><i>" + title + "</i></h1><h2>" + author + "</h2></header><main class='main-content'>")
     result.append("%TOC%")
     result.append("</main>")
@@ -163,7 +162,7 @@ def main(file):
 
     while pos < l:
         if content[pos] == "======================\n":
-            result = reset_result()
+            result = reset_result("Dramatis Personae")
             result.append("<header class='page-header'><h1>Dramatis Personae</h1></header><main class='main-content'>")
             result.append("\n")
             pos += 1
@@ -176,13 +175,11 @@ def main(file):
             output.close()
             files.append([sub(" ", "", "Dramatis Personae").lower(), "Dramatis Personae"])
         elif content[pos] == "============================\n": # Epilogue
-            result = reset_result()
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 2].replace(",", ""))
+            result = reset_result(actcontent)
             result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
-            result.append("\n")
-            result.append("<h1>" + actcontent + "</h1>")
             result.append("\n")
             content[pos] = content[pos - 1]
             pos = list_scene(content, pos, result, l)
@@ -194,10 +191,10 @@ def main(file):
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
         elif content[pos] == "========\n" and "EPILOGUE" in content[pos - 1]: # Epilogue
-            result = reset_result()
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1].replace(",", ""))
+            result = reset_result(actcontent)
             result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
             result.append("\n")
             content[pos] = content[pos - 1]
@@ -211,13 +208,11 @@ def main(file):
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
         elif content[pos] == "============\n": # Prologue
-            result = reset_result()
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1].replace("THE ", ""))
+            result = reset_result(actcontent)
             result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
-            result.append("\n")
-            result.append("<h1>" + actcontent + "</h1>")
             result.append("\n")
             pos += 1
             pos = list_scene(content, pos, result, l)
@@ -229,9 +224,9 @@ def main(file):
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
         elif content[pos] == "=======\n" or content[pos] == "========\n": # Scene
-            result = reset_result()
             scene += 1
             scenecontent = capwords(content[pos - 1])
+            result = reset_result(actcontent + " – " + scenecontent)
             result.append("<header class='page-header'><h1>" + actcontent + "</h1><h2>" + scenecontent + "</h2></header><main class='main-content'>")
             result.append("\n")
             pos += 1
@@ -244,7 +239,6 @@ def main(file):
             output.close()
             files.append([sub(" ", "", actcontent + scenecontent).lower(), actcontent + " – " + scenecontent])
         elif content[pos] == "=====\n": # Act
-            result = reset_result()
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1])
@@ -255,8 +249,7 @@ def main(file):
         parse_file(i, files)
 
 def main_index():
-    style = open("plays.css", "r", encoding="utf-8").read()
-    result = ["<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><link rel='icon' href='https://rfoxinter.github.io/favicon.ico'/><meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#157878'><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/normalize.css'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/style.css'><style>" + style + "</style></head><body>"]
+    result = ["<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>Shakespeare’s works</title><link rel='icon' href='https://rfoxinter.github.io/favicon.ico'/><meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#157878'><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/normalize.css'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/style.css'><link rel='stylesheet' type='text/css' href='plays.css'></head><body>"]
     result.append("<header class='page-header'><h1>Shakespeare’s works</h1></header><main class='main-content'>")
     folders = []
     for folder in listdir("."):
