@@ -10,7 +10,8 @@ global opquote
 opquote = False
 
 p = ArgumentParser()
-p.add_argument("-r", "--recompile", help = "Recompile all of the files", action='store_true')
+p.add_argument("-r", "--recompile", help = "Recompile all of the files", action="store_true")
+p.add_argument("--books", help = "List of files to compile", type=str, default="")
 args = p.parse_args()
 
 def main(file):
@@ -88,7 +89,7 @@ def main(file):
         del shift
         return "<p>" + sub("\n", "</p>\n", replace_html(line))
 
-    def convertline(line):
+    def convertline(line, itindent):
         global op
         global opquote
         for character in findall(r"\b[A-Z]+(?:'[A-Z]+)*\b", line):
@@ -114,9 +115,10 @@ def main(file):
         line = sub("\]", "]</i>", line)
         line = sub("\\t", "     ", line)
         _line = line.rsplit("   ", 1)
-        line = "   <i>".join(_line)
-        if len(_line) > 1:
-            line = sub("\\n", "</i>\\n", line)
+        if itindent:
+            line = "   <i>".join(_line)
+            if len(_line) > 1:
+                line = sub("\\n", "</i>\\n", line)
         return "<p>" + sub("\n", "</p>\n", replace_html(line))
 
     def list_characters(lst, pos, result, l):
@@ -126,14 +128,14 @@ def main(file):
             pos += 1
         return pos
 
-    def list_scene(lst, pos, result, l):
+    def list_scene(lst, pos, result, l, itindent = True):
         prev = lst[pos - 1]
         while pos < l and (pos + 2 >= l or lst[pos + 2][0] != '='):
             if lst[pos] == "\n" and prev != "\n":
                 result.append("<br/>\n")
                 result.append("\n")
             elif lst[pos] != "\n":
-                result.append(convertline(lst[pos]))
+                result.append(convertline(lst[pos], itindent))
                 result.append("\n")
             pos += 1
         return pos
@@ -175,31 +177,50 @@ def main(file):
             output.close()
             files.append([sub(" ", "", "Dramatis Personae").lower(), "Dramatis Personae"])
         elif content[pos] == "============================\n": # Epilogue
-            act += 1
-            scene = 0
-            actcontent = capwords(content[pos - 2].replace(",", ""))
-            result = reset_result(actcontent)
-            result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
+            scene += 1
+            scenecontent = capwords(content[pos - 2].replace(",", ""))
+            result = reset_result(actcontent + " – " + scenecontent)
+            result.append("<header class='page-header'><h1>" + actcontent + "</h1><h2>" + scenecontent + "</h2></header><main class='main-content'>")
             result.append("\n")
             content[pos] = content[pos - 1]
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, False)
             result.append("</main>")
             add_footer(result)
             result.append("</body>")
-            output = open(ttl + "/" + sub(" ", "", actcontent).lower() + ".html", "w", encoding="utf-8")
+            output = open(ttl + "/" + sub(" ", "", actcontent + scenecontent).lower() + ".html", "w", encoding="utf-8")
             output.writelines(result)
             output.close()
-            files.append([sub(" ", "", actcontent).lower(), actcontent])
-        elif content[pos] == "========\n" and "EPILOGUE" in content[pos - 1]: # Epilogue
-            act += 1
-            scene = 0
-            actcontent = capwords(content[pos - 1].replace(",", ""))
-            result = reset_result(actcontent)
-            result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
+            files.append([sub(" ", "", actcontent + scenecontent).lower(), actcontent + " – " + scenecontent])
+        elif (content[pos] == "========\n" or content[pos] == "=========\n") and "EPILOGUE" in content[pos - 1]: # Epilogue
+            scene += 1
+            scenecontent = capwords(content[pos - 1].replace(",", "").replace(".", ""))
+            result = reset_result(actcontent + " – " + scenecontent)
+            result.append("<header class='page-header'><h1>" + actcontent + "</h1><h2>" + scenecontent + "</h2></header><main class='main-content'>")
             result.append("\n")
             content[pos] = content[pos - 1]
             pos += 2
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, False)
+            result.append("</main>")
+            add_footer(result)
+            result.append("</body>")
+            output = open(ttl + "/" + sub(" ", "", actcontent + scenecontent).lower() + ".html", "w", encoding="utf-8")
+            output.writelines(result)
+            output.close()
+            files.append([sub(" ", "", actcontent + scenecontent).lower(), actcontent + " – " + scenecontent])
+        elif content[pos] == "=========\n" and "INDUCTION" in content[pos - 1]: # Induction
+            act += 1
+            scene = 0
+            actcontent = capwords(content[pos - 1])
+            pos += 1
+        elif content[pos] == "==========\n" and "INDUCTION" in content[pos - 1]: # Induction
+            act += 1
+            scene = 0
+            actcontent = capwords(content[pos - 1])
+            result = reset_result(actcontent)
+            result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
+            result.append("\n")
+            pos += 1
+            pos = list_scene(content, pos, result, l, False)
             result.append("</main>")
             add_footer(result)
             result.append("</body>")
@@ -207,7 +228,7 @@ def main(file):
             output.writelines(result)
             output.close()
             files.append([sub(" ", "", actcontent).lower(), actcontent])
-        elif content[pos] == "============\n": # Prologue
+        elif content[pos] == "============\n" or (content[pos] == "========\n" and "PROLOGUE" in content[pos - 1]) or (content[pos] == "========\n" and "Preface" in content[pos - 1]): # Prologue
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1].replace("THE ", ""))
@@ -215,7 +236,7 @@ def main(file):
             result.append("<header class='page-header'><h1>" + actcontent + "</h1></header><main class='main-content'>")
             result.append("\n")
             pos += 1
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, False)
             result.append("</main>")
             add_footer(result)
             result.append("</body>")
@@ -230,7 +251,7 @@ def main(file):
             result.append("<header class='page-header'><h1>" + actcontent + "</h1><h2>" + scenecontent + "</h2></header><main class='main-content'>")
             result.append("\n")
             pos += 1
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, "chorus" not in content[pos - 2].lower())
             result.append("</main>")
             add_footer(result)
             result.append("</body>")
@@ -248,6 +269,11 @@ def main(file):
     for i in range(len(files)):
         parse_file(i, files)
 
+def sortkey(x):
+    if x[0] == "A" and "A" <= x[1] <= "Z":
+        x = x[1:len(x)]
+    return x.replace("The", "").replace("Part", "")
+
 def main_index():
     result = ["<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>Shakespeare’s works</title><link rel='icon' href='https://rfoxinter.github.io/favicon.ico'/><meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#157878'><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/normalize.css'><link rel='stylesheet' type='text/css' href='https://rfoxinter.github.io/style.css'><link rel='stylesheet' type='text/css' href='plays.css'></head><body>"]
     result.append("<header class='page-header'><h1>Shakespeare’s works</h1></header><main class='main-content'>")
@@ -255,7 +281,7 @@ def main_index():
     for folder in listdir("."):
         if isdir(folder) and folder[0] != ".":
             folders.append(folder)
-    for folder in sorted(folders):
+    for folder in sorted(folders, key=sortkey):
         title = open(folder + "/index.html", "r", encoding="utf-8").read()
         start = title.find("<h1>")
         end = title.find("</h1>")
@@ -270,11 +296,16 @@ def main_index():
     output.writelines(result)
     output.close()
 
+def add_ext(file):
+    ttl, _ = splitext(file)
+    return ttl + ".txt"
+
 if __name__ == "__main__":
-    for file in listdir("."):
+    files = listdir(".") if args.books == "" else map(add_ext ,args.books.split(","))
+    for file in files:
         ttl, ext = splitext(file)
         if ext == ".txt":
-            if args.recompile or not exists(ttl + "/index.html"):
+            if args.recompile or not exists(ttl + "/index.html") or args.books != "":
                 print(ttl)
                 if not exists("./" + ttl):
                     mkdir("./" + ttl)

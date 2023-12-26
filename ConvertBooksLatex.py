@@ -14,6 +14,7 @@ opquote = False
 
 p = ArgumentParser()
 p.add_argument("-r", "--recompile", help = "Recompile all of the files", action='store_true')
+p.add_argument("--books", help = "List of files to compile", type=str, default="")
 args = p.parse_args()
 
 def main(file):
@@ -54,7 +55,7 @@ def main(file):
             line = sub(exp, "\\\\emph{", line)
         return line
 
-    def convertline(line):
+    def convertline(line, itindent):
         global op
         global opquote
         for character in findall(r"\b[A-Z]+(?:'[A-Z]+)*\b", line):
@@ -81,9 +82,10 @@ def main(file):
         line = sub("\\t", "\\\\qquad{}", line)
         line = sub("   ", "\\\\quad{}", line)
         _line = line.rsplit("\\qquad{}", 1)
-        line = "\\qquad\\textsl{".join(_line)
-        if len(_line) > 1:
-            line = sub("\\n", "}\\n", line)
+        if itindent:
+            line = "\\qquad\\textsl{".join(_line)
+            if len(_line) > 1:
+                line = sub("\\n", "}\\n", line)
         line = sub("  ", " {} ", line)
         return line
 
@@ -94,14 +96,14 @@ def main(file):
             pos += 1
         return pos
 
-    def list_scene(lst, pos, result, l):
+    def list_scene(lst, pos, result, l, itindent = True):
         prev = lst[pos - 1]
         while pos < l and (pos + 2 >= l or lst[pos + 2][0] != '='):
             if lst[pos] == "\n" and prev != "\n":
                 result.append("\\null\n")
                 result.append("\n")
             elif lst[pos] != "\n":
-                result.append(convertline(lst[pos]))
+                result.append(convertline(lst[pos], itindent))
                 result.append("\n")
             pos += 1
         return pos
@@ -126,36 +128,48 @@ def main(file):
             pos += 1
             pos = list_characters(content, pos, result, l)
         elif content[pos] == "============================\n": # Epilogue
-            act += 1
-            scene = 0
-            actcontent = capwords(content[pos - 2].replace(",", ""))
-            result.append("{\leftskip=0em\\section*{" + actcontent + "}}\\label{sec:" + str(act) + "}\\addcontentsline{toc}{section}{" + actcontent + "}\\pagestyle{fancy}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{Epilogue}}")
+            scene += 1
+            result.append("{\leftskip=0em\\subsection*{" + capwords(content[pos - 1].replace(",", "")) + "}}\\label{subsec:" + str(act) + "." + str(scene) + "}\\addcontentsline{toc}{subsection}{" + capwords(content[pos - 1].replace(",", "")) + "}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{" + actcontent + "}}\\fancyhead[LO,RE]{\\textsc{" + capwords(content[pos - 1].replace(",", "")) + "}}")
             result.append("\n")
             content[pos] = content[pos - 1]
-            pos = list_scene(content, pos, result, l)
-        elif content[pos] == "========\n" and "EPILOGUE" in content[pos - 1]: # Epilogue
-            act += 1
-            scene = 0
-            actcontent = capwords(content[pos - 1].replace(",", ""))
-            result.append("{\leftskip=0em\\section*{" + actcontent + "}}\\label{sec:" + str(act) + "}\\addcontentsline{toc}{section}{" + actcontent + "}\\pagestyle{fancy}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{Epilogue}}")
+            pos = list_scene(content, pos, result, l, False)
+        elif (content[pos] == "========\n" or content[pos] == "=========\n") and "EPILOGUE" in content[pos - 1]: # Epilogue
+            scene += 1
+            scenecontent = capwords(content[pos - 1].replace(",", "").replace(".", ""))
+            result.append("{\leftskip=0em\\subsection*{" + scenecontent + "}}\\label{subsec:" + str(act) + "." + str(scene) + "}\\addcontentsline{toc}{subsection}{" + scenecontent + "}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{" + actcontent + "}}\\fancyhead[LO,RE]{\\textsc{" + scenecontent + "}}")
             result.append("\n")
             content[pos] = content[pos - 1]
             pos += 2
-            pos = list_scene(content, pos, result, l)
-        elif content[pos] == "============\n": # Prologue
+            pos = list_scene(content, pos, result, l, False)
+        elif content[pos] == "=========\n" and "INDUCTION" in content[pos - 1]: # Induction
+            act += 1
+            scene = 0
+            actcontent = capwords(content[pos - 1])
+            result.append("{\leftskip=0em\\section*{" + actcontent + "}}\\label{sec:" + str(act) + "}\\addcontentsline{toc}{section}{" + actcontent + "}")
+            result.append("\n")
+            pos += 1
+        elif content[pos] == "==========\n" and "INDUCTION" in content[pos - 1]: # Induction
+            act += 1
+            scene = 0
+            actcontent = capwords(content[pos - 1])
+            result.append("{\leftskip=0em\\section*{" + actcontent + "}}\\label{sec:" + str(act) + "}\\addcontentsline{toc}{section}{" + actcontent + "}\\pagestyle{fancy}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{Induction}}")
+            result.append("\n")
+            pos += 1
+            pos = list_scene(content, pos, result, l, False)
+        elif content[pos] == "============\n" or (content[pos] == "========\n" and "PROLOGUE" in content[pos - 1]) or (content[pos] == "========\n" and "Preface" in content[pos - 1]): # Prologue
             act += 1
             scene = 0
             actcontent = capwords(content[pos - 1].replace("THE ", ""))
             result.append("{\leftskip=0em\\section*{" + actcontent + "}}\\label{sec:" + str(act) + "}\\addcontentsline{toc}{section}{" + actcontent + "}\\pagestyle{fancy}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{Prologue}}")
             result.append("\n")
             pos += 1
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, False)
         elif content[pos] == "=======\n" or content[pos] == "========\n": # Scene
             scene += 1
             result.append("{\leftskip=0em\\subsection*{" + capwords(content[pos - 1]) + "}}\\label{subsec:" + str(act) + "." + str(scene) + "}\\addcontentsline{toc}{subsection}{" + capwords(content[pos - 1]) + "}\\fancyhead{}\\fancyhead[RO,LE]{\\textsc{" + actcontent + "}}\\fancyhead[LO,RE]{\\textsc{" + capwords(content[pos - 1]) + "}}")
             result.append("\n")
             pos += 1
-            pos = list_scene(content, pos, result, l)
+            pos = list_scene(content, pos, result, l, "chorus" not in content[pos - 2].lower())
         elif content[pos] == "=====\n": # Act
             act += 1
             scene = 0
@@ -170,11 +184,16 @@ def main(file):
     output.writelines(result)
     output.close()
 
+def add_ext(file):
+    ttl, _ = splitext(file)
+    return ttl + ".txt"
+
 if __name__ == "__main__":
-    for file in listdir("."):
+    files = listdir(".") if args.books == "" else map(add_ext ,args.books.split(","))
+    for file in files:
         ttl, ext = splitext(file)
         if ext == ".txt":
-            if args.recompile or not exists(ttl + ".pdf"):
+            if args.recompile or not exists(ttl + ".pdf") or args.books != "":
                 print(ttl)
                 main(ttl)
                 for _ in range(3):
