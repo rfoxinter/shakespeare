@@ -17,6 +17,7 @@ args = p.parse_args()
 def main(file):
     def replace_html(line):
         line = sub("'", "’", line)
+        line = sub("’’", "'", line)
         line = sub("``", "“", line)
         line = sub("\"", "”", line)
         line = sub("--", "–", line)
@@ -59,15 +60,18 @@ def main(file):
     def convertchar(line):
         global op
         global opquote
+        if line.find("COUNTESS of Rossillion, ") != -1:
+            op = True
+            line = sub("COUNTESS of Rossillion, ", "COUNTESS of Rossillion     <i>", line)
         for character in findall(r"\b[A-Z']+(?:'?, [A-Z]+)*\b", line):
             if len(character) > 1:
                 if match(r"\b[I|V|X]+\b", character) is None:
-                    line = sub(character, "<sc>" + capwords(character) + "</sc>", line, 1)
+                    line = sub(character, "<span class=''sc''>" + capwords(character) + "</span>", line, 1)
                 else:
                     _line = line.split(character)[0].split(" ")
                     addbrackets = True
                     for l in _line:
-                        if l != "" and match(r"<sc>", l) is None:
+                        if l != "" and match(r"<span class=''sc''>", l) is None:
                             addbrackets = False
                     if addbrackets:
                         line = sub(character, "<span>" + character + "</span>", line, 1)
@@ -94,7 +98,7 @@ def main(file):
         global opquote
         for character in findall(r"\b[A-Z]+(?:'[A-Z]+)*\b", line):
             if len(character) > 1 and (match(r"\b[I|V|X]+\b", character) is None):
-                line = sub(character, "<sc>" + capwords(character) + "</sc>", line)
+                line = sub(character, "<span class=''sc''>" + capwords(character) + "</span>", line)
                 line = sub(">,", ">", line)
         shift = 0
         for quote in finditer("\"", line):

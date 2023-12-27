@@ -21,6 +21,9 @@ def main(file):
     def convertchar(line):
         global op
         global opquote
+        if line.find("COUNTESS of Rossillion, ") != -1:
+            op = True
+            line = sub("COUNTESS of Rossillion, ", "COUNTESS of Rossillion\\\\qquad\\\\emph{", line)
         for character in findall(r"\b[A-Z']+(?:'?, [A-Z]+)*\b", line):
             if len(character) > 1:
                 if match(r"\b[I|V|X]+\b", character) is None:
